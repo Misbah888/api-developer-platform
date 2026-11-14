@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  build-test-docker:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,14 +21,53 @@ jobs:
           java-version: '27'
           cache: maven
 
-      - name: Build developer-service
+      - name: Test developer-service
         working-directory: developer-service
         run: mvn clean test
 
-      - name: Build api-gateway
+      - name: Test api-gateway
         working-directory: api-gateway
         run: mvn clean test
 
-      - name: Build service-registry
+      - name: Test service-registry
         working-directory: service-registry
         run: mvn clean test
+
+      - name: Package developer-service
+        working-directory: developer-service
+        run: mvn package -DskipTests
+
+      - name: Package api-gateway
+        working-directory: api-gateway
+        run: mvn package -DskipTests
+
+      - name: Package service-registry
+        working-directory: service-registry
+        run: mvn package -DskipTests
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push developer-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./developer-service
+          push: true
+          tags: mdmisbah/developer-service:latest
+
+      - name: Build and push api-gateway
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api-gateway
+          push: true
+          tags: mdmisbah/api-gateway:latest
+
+      - name: Build and push service-registry
+        uses: docker/build-push-action@v6
+        with:
+          context: ./service-registry
+          push: true
+          tags: mdmisbah/service-registry:latest
