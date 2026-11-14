@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '27'
+          cache: maven
+
+      - name: Build developer-service
+        working-directory: developer-service
+        run: mvn clean test
+
+      - name: Build api-gateway
+        working-directory: api-gateway
+        run: mvn clean test
+
+      - name: Build service-registry
+        working-directory: service-registry
+        run: mvn clean test
