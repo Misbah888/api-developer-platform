@@ -1,0 +1,40 @@
+services:
+
+  mysql-db:
+    image: mysql:8
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: api_developer_platform
+    ports:
+      - "3307:3306"
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pMISBAHFF007"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  developer-service:
+    image: developer-service
+    container_name: developer-service
+    ports:
+      - "8082:8080"
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/api_developer_platform
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+
+  api-gateway:
+    image: api-gateway
+    container_name: api-gateway
+    ports:
+      - "8085:8085"
+
+    depends_on:
+      - developer-service
